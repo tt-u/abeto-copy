@@ -28,6 +28,20 @@ function adaptRender(glsl: string, stage: "vertex" | "fragment"): string {
     /uniform\s+Global\s*\{[^}]*\}\s*;/g,
     "uniform vec2 resolution;\nuniform float time;\nuniform float dtRatio;",
   );
+  if (stage === "vertex") {
+    // The recovered shader adds the ribbon's half-width to the clip-space position, so the
+    // perspective divide makes the on-screen width ∝ 1/clip.w — i.e. thicker where the trail
+    // is near the camera, thinner where it's far. Once you orbit, that reads as the line
+    // changing thickness as the cursor passes over the (near) flower vs the (far) leaves.
+    // Scale the offset by clip.w / uRefW (uRefW = camera→target distance) so it cancels the
+    // divide and the width is constant on screen, matching the original head-on look.
+    out = out
+      .replace("uniform float dtRatio;", "uniform float dtRatio;\nuniform float uRefW;")
+      .replace(
+        "currentProjected.xy += normal * mix(1.0, -1.0, step(0.5, uv.y));",
+        "currentProjected.xy += normal * (currentProjected.w / uRefW) * mix(1.0, -1.0, step(0.5, uv.y));",
+      );
+  }
   if (stage === "fragment" && /\bgl_FragColor\b/.test(out)) {
     out =
       "layout(location = 0) out highp vec4 outColor;\n" +
@@ -111,6 +125,7 @@ export class Line implements ScenePart {
         time: { value: 0 },
         dtRatio: { value: 1 },
         lineWidth: { value: 0.01 },
+        uRefW: { value: 4 }, // camera→target distance; keeps width constant across depth
         uColor: { value: new THREE.Color(theme.line.color) },
         tTexture1: { value: null },
         tNoise: { value: tNoise },
@@ -150,6 +165,12 @@ export class Line implements ScenePart {
     this.pointerWorld.copy(v3);
   }
 
+  /** Re-snap the whole trail to the pointer on the next frame (e.g. after an orbit drag,
+   *  so the trail doesn't streak from its stale position to the cursor). */
+  snap(): void {
+    this._snap = true;
+  }
+
   update(deltaMs: number, camera: THREE.Camera): void {
     if (!this._compute || !this.material) return;
     const dtRatio = Math.min(1, deltaMs * 0.06);
@@ -171,6 +192,10 @@ export class Line implements ScenePart {
     this._snap = false;
 
     this.material.uniforms.tTexture1.value = this._trail.read.texture;
+    // Reference depth for the constant-width trick: distance from camera to the orbit
+    // target (the origin). With pan disabled the target stays at the origin, so the
+    // camera's distance from the origin is exactly that.
+    this.material.uniforms.uRefW.value = Math.max(0.001, camera.position.length());
     // Bundle formula: thin stroke, width ∝ 9/screenHeight, scaled by pointer speed
     // (fades out when still). This is ~10× thinner than a naive constant width.
     const screenH = this.material.uniforms.resolution.value.y || 1080;
