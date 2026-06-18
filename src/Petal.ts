@@ -138,14 +138,12 @@ export class Petal implements ScenePart {
     if (this.material) this.material.uniforms.uBloom.value = bloom;
   }
 
-  private _pulseScale = 1;
-  /** Beat pulse: the flower breathes subtly with the music (0 = at rest). Eased so it
-   *  swells and settles smoothly instead of twitching frame-to-frame. */
-  setPulse(p: number): void {
-    if (!this.mesh) return;
-    const target = 1 + p * 0.045; // small — a breath, not a throb
-    this._pulseScale += (target - this._pulseScale) * 0.1;
-    this.mesh.scale.setScalar(this._pulseScale);
+  private _beat = 0;
+  /** Music beat 0..1: speeds up the flower's own animation on the beat so its motion
+   *  matches the music's rhythm. This modulates animation SPEED (not size or position),
+   *  so the motion stays continuous and never jerks — it just surges and eases. */
+  setBeat(p: number): void {
+    this._beat = p;
   }
 
   /**
@@ -159,7 +157,9 @@ export class Petal implements ScenePart {
 
     this.elapsed += deltaMs * 0.001;
     this.additionalTime = lerp(this.additionalTime, this.additionalTimeTarget, 0.035);
-    this.baseTime += deltaMs * 0.001;
+    // beat-sync: the flower's own animation runs faster on the beat (1× at rest), so its
+    // motion keeps time with the music. Speed modulation → motion stays smooth, no jerk.
+    this.baseTime += deltaMs * 0.001 * (1 + this._beat * 2.2);
     this.additionalHoldTarget += this.touching ? deltaMs * 0.0025 : 0;
     this.additionalHold = lerp(this.additionalHold, this.additionalHoldTarget, 0.035);
 

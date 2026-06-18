@@ -174,8 +174,8 @@ function sizeAll(): void {
   renderer.setAnimationLoop(() => {
     const dt = clock.getDelta();
 
-    // beat-sync: let the flower breathe gently in time with the music (no jerks)
-    petal.setPulse(ambient.running ? ambient.pulse() : 0);
+    // beat-sync: drive the flower's own animation speed with the music's beat (no scaling)
+    petal.setBeat(ambient.running ? ambient.pulse() : 0);
 
     // advance the seasons (re-theme a few times a second while the cycle runs)
     if (seasonsOn) {
