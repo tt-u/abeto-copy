@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon32-11fb90a3.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon16-19be03f2.png" />
+    <title>abeto — copy</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #fce8f0;
+      }
+      canvas {
+        display: block;
+      }
+
+      /* ---- the top-left panel — tweak these freely ------------------- */
+      .panel {
+        --panel-top: 12px;
+        --panel-left: 12px;
+        --panel-bg: rgba(255, 255, 255, 0.46);
+        --panel-bg-hover: rgba(255, 255, 255, 0.66);
+        --panel-fg: rgba(60, 20, 35, 0.66);
+        --panel-accent: rgba(60, 20, 35, 0.88);
+        --panel-radius: 9px;
+        --panel-blur: 4px;
+        --panel-font-size: 11px;
+        --panel-width: 234px;
+      }
+      /* ---------------------------------------------------------------- */
+
+      .panel {
+        position: fixed;
+        top: var(--panel-top);
+        left: var(--panel-left);
+        z-index: 10;
+        width: var(--panel-width);
+        padding: 10px 11px;
+        border-radius: var(--panel-radius);
+        font: var(--panel-font-size) / 1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--panel-fg);
+        background: var(--panel-bg);
+        backdrop-filter: blur(var(--panel-blur));
+        -webkit-backdrop-filter: blur(var(--panel-blur));
+        transform-origin: top left;
+        /* entrance: fade + slide in from the left, just after load */
+        animation: panel-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+        transition: background 0.35s ease;
+      }
+      .panel:hover {
+        background: var(--panel-bg-hover);
+      }
+
+      .panel-presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .panel-preset {
+        flex: 1 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 7px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.5);
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+        transition:
+          transform 0.18s ease,
+          background 0.18s ease,
+          border-color 0.18s ease;
+      }
+      .panel-preset::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--dot, #888);
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12) inset;
+      }
+      .panel-preset:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.85);
+      }
+      .panel-preset.is-active {
+        border-color: var(--panel-accent);
+        background: rgba(255, 255, 255, 0.92);
+      }
+
+      .panel .disclaimer {
+        margin: 10px 0 0;
+        padding-top: 8px;
+        border-top: 1px solid rgba(60, 20, 35, 0.14);
+        font-size: 10px;
+        line-height: 1.4;
+        opacity: 0.85;
+      }
+      .panel .disclaimer a {
+        color: var(--panel-accent);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      @keyframes panel-in {
+        from {
+          opacity: 0;
+          transform: translateX(-10px) translateY(-4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0) translateY(0);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .panel,
+        .panel-preset {
+          animation: none;
+          transition: none;
+        }
+      }
+    </style>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <aside class="panel">
+      <div id="controls"></div>
+      <p class="disclaimer">
+        Non-commercial study recreation of
+        <a href="https://abeto.co/" target="_blank" rel="noopener noreferrer">abeto.co</a>.
+        Original design &amp; assets &copy; abeto — not affiliated.
+      </p>
+    </aside>
+  </body>
+</html>
