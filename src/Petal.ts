@@ -103,6 +103,7 @@ export class Petal implements ScenePart {
         tPetal: { value: tPetal },
         tNoise: { value: tNoise },
         uFlowerTime: { value: 0 },
+        uBloom: { value: 1 }, // 0 = tight bud, 1 = full bloom (seasonal)
       },
       vertexShader: petalVert,
       fragmentShader: petalFrag,
@@ -130,6 +131,21 @@ export class Petal implements ScenePart {
       uColor2: t.flower.color2,
       uOutlineColor: t.flower.outline,
     });
+  }
+
+  /** Seasonal openness: 0 = tight bud, 1 = full bloom. */
+  setForm(bloom: number): void {
+    if (this.material) this.material.uniforms.uBloom.value = bloom;
+  }
+
+  private _pulseScale = 1;
+  /** Beat pulse: the flower breathes subtly with the music (0 = at rest). Eased so it
+   *  swells and settles smoothly instead of twitching frame-to-frame. */
+  setPulse(p: number): void {
+    if (!this.mesh) return;
+    const target = 1 + p * 0.045; // small — a breath, not a throb
+    this._pulseScale += (target - this._pulseScale) * 0.1;
+    this.mesh.scale.setScalar(this._pulseScale);
   }
 
   /**

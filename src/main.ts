@@ -19,7 +19,14 @@ import { FluidSimulation } from "./FluidSimulation";
 import { Line } from "./Line";
 import { Headline } from "./Headline";
 import { theme, type Theme } from "./theme";
-import { createPanel } from "./ui";
+import { createPanel, type PanelHandle } from "./ui";
+import { seasonTheme, seasonName, seasonForm } from "./seasons";
+import { Ambient } from "./audio";
+
+const ambient = new Ambient();
+
+// Seconds for one full year (spring → summer → autumn → winter → spring).
+const SEASON_CYCLE = 64;
 import type { ScenePart } from "./types";
 
 function showError(title: string, detail: string): void {
@@ -116,8 +123,31 @@ function sizeAll(): void {
     renderer.setClearColor(next.bgColor);
     document.documentElement.style.backgroundColor = next.bgColor;
   }
+  // Seasons cycle on by default; picking a static preset stops it.
+  let seasonsOn = true;
+  let seasonElapsed = 0;
+  let seasonTick = 0;
+  let panel: PanelHandle | null = null;
   const controlsEl = document.getElementById("controls");
-  if (controlsEl) createPanel({ mount: controlsEl, initial: theme, onChange: setTheme });
+  if (controlsEl) {
+    panel = createPanel({
+      mount: controlsEl,
+      seasonsOn,
+      onPreset: (t) => {
+        seasonsOn = false;
+        setTheme(t);
+        petal.setForm(1); // static palette → full bloom
+      },
+      onSeasons: (on) => {
+        seasonsOn = on;
+      },
+      trackNames: ["Track 1", "Track 2"],
+      onPlay: (i) => ambient.play(i),
+      onStop: () => ambient.stop(),
+    });
+  }
+  setTheme(seasonTheme(0, SEASON_CYCLE)); // start on spring
+  petal.setForm(seasonForm(0, SEASON_CYCLE));
 
   addEventListener("wheel", (e: WheelEvent) => petal.onWheel(e.deltaX, e.deltaY), {
     passive: true,
@@ -143,6 +173,24 @@ function sizeAll(): void {
   const clock = new THREE.Clock();
   renderer.setAnimationLoop(() => {
     const dt = clock.getDelta();
+
+    // beat-sync: let the flower breathe gently in time with the music (no jerks)
+    petal.setPulse(ambient.running ? ambient.pulse() : 0);
+
+    // advance the seasons (re-theme a few times a second while the cycle runs)
+    if (seasonsOn) {
+      seasonElapsed += dt;
+      seasonTick += dt;
+      if (seasonTick >= 0.1) {
+        seasonTick = 0;
+        const bloom = seasonForm(seasonElapsed, SEASON_CYCLE);
+        setTheme(seasonTheme(seasonElapsed, SEASON_CYCLE));
+        petal.setForm(bloom);
+        ambient.setMood(bloom); // brighter sound in summer, cold in winter
+        panel?.setSeason(seasonName(seasonElapsed, SEASON_CYCLE));
+      }
+    }
+
     fluid.setAspect(renderer.domElement.width / renderer.domElement.height);
     fluid.step(dt);
     controls.update();

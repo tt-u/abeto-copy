@@ -7,6 +7,7 @@ uniform Global{
 uniform float uCount;
 uniform sampler2D tNoise;
 uniform float uFlowerTime;
+uniform float uBloom;
 attribute float random;
 varying vec2 vUv;
 varying vec2 vHighPrecisionZW;
@@ -58,6 +59,9 @@ void main() {
     pos.xz = rot2 * pos.xz;
     // offset in space to reduce intersections
     pos.y -= pow(progress01, 2.0) * 0.5;
+    // seasonal bloom: draw petals inward toward a tight bud as uBloom falls
+    pos.xz *= mix(0.4, 1.0, uBloom);
+    pos.y *= mix(0.72, 1.0, uBloom);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
     vHighPrecisionZW = gl_Position.zw;
 }
