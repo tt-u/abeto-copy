@@ -159,7 +159,7 @@ export class Petal implements ScenePart {
     this.additionalTime = lerp(this.additionalTime, this.additionalTimeTarget, 0.035);
     // beat-sync: the flower's own animation runs faster on the beat (1× at rest), so its
     // motion keeps time with the music. Speed modulation → motion stays smooth, no jerk.
-    this.baseTime += deltaMs * 0.001 * (1 + this._beat * 2.2);
+    this.baseTime += deltaMs * 0.001 * (1 + this._beat * 1);
     this.additionalHoldTarget += this.touching ? deltaMs * 0.0025 : 0;
     this.additionalHold = lerp(this.additionalHold, this.additionalHoldTarget, 0.035);
 
